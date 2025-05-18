@@ -19,7 +19,6 @@ class ResponseOut(BaseModel):
     reviewed: bool
     sent: bool
     created_at: datetime  # from typing import datetime
-    category: str | None  # <-- add this!
 
     class Config:
         from_attributes = True

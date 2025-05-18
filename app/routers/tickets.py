@@ -7,6 +7,7 @@ from app import schemas
 from sqlalchemy import select, insert
 from app.services.classifier import classify_ticket
 from app.db.models import Ticket, Response
+from app.services.response_gen import generate_response
 
 router = APIRouter()
 
@@ -18,14 +19,33 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 # Dependency: get DB session for each request
 async def draft_and_store_response(ticket_id: int, session_maker):
     async with session_maker() as session:
-        stmt = insert(Response).values(
+        ticket = await session.get(Ticket, ticket_id)
+        if not ticket:
+            return  # Ticket not found, silently exit or log as needed
+
+        try:
+            # Generate the AI-powered response
+            response_text = await generate_response(
+                ticket.subject, ticket.body, ticket.category or "Other"
+            )
+            status = "completed"
+        except Exception as e:
+            response_text = f"Response generation failed: {str(e)}"
+            status = "failed"
+            # Optionally log the traceback or error here
+
+        # Store response in DB
+        resp = Response(
             ticket_id=ticket_id,
-            generated_response="Your response is being prepared. (This is a placeholder.)",
+            generated_response=response_text,
             reviewed=False,
-            sent=False
+            sent=False,
+            status=status
         )
-        await session.execute(stmt)
+        session.add(resp)
         await session.commit()
+
+
 
 
 async def classify_and_update_ticket(ticket_id: int, session_maker):

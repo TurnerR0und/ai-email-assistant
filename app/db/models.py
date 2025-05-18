@@ -25,7 +25,8 @@ class Response(Base):
     sent = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     ticket = relationship("Ticket", back_populates="responses")
-
+    status = Column(String(20), nullable=True)
+    
 class Log(Base):
     __tablename__ = "logs"
     id = Column(Integer, primary_key=True, index=True)
