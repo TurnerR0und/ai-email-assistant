@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+
+# Python environment variables
+.env
+
+# Alembic/migration artifacts
+alembic/versions/
+
+# SQLite and other database files (if ever used locally)
+*.sqlite3
+*.db
+
+# Test and synthetic data
+synthetic_tickets.json
+ticketsynth.py
+test_insert.py
+
+# VSCode and IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+
+# Ignore coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+
+# Pytest cache
+.pytest_cache/
+
+# Misc
+*.swp
