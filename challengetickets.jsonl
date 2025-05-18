@@ -1,0 +1,10 @@
+{"subject": "Refund Request: App Crash During Purchase", "body": "I tried buying a subscription in your app, but it crashed and charged me anyway. Please process a refund and let me know how to avoid this issue in the future.", "category": "Refund"}
+{"subject": "Not Satisfied with New Dashboard", "body": "The new dashboard is confusing and less useful than the old one. Is there any way to switch back? This update really disrupted my workflow.", "category": "Complaint"}
+{"subject": "Can't Reset My Password", "body": "I'm unable to reset my password. The reset link doesn't work and I keep getting an error. Can you help me log in again?", "category": "Account"}
+{"subject": "Question about Subscription Renewal", "body": "My subscription renewed automatically, but I thought I had cancelled it. Can you check my account and confirm the status?", "category": "Account"}
+{"subject": "Frequent Disconnects During Video Calls", "body": "Your app keeps disconnecting me during important calls. I wish there was a way to automatically reconnect or at least see connection diagnostics.", "category": "Technical"}
+{"subject": "Double Charged on Invoice", "body": "I was billed twice this month for the same service. Please issue a refund for the extra charge and explain why this happened.", "category": "Refund"}
+{"subject": "Thanks, but I Have a Suggestion", "body": "Love your product! One thing though, it would be great if the login page remembered my email between sessions.", "category": "Feedback"}
+{"subject": "Account Locked After Error Message", "body": "I tried to update my payment info and now my account is locked. Was this a technical issue? Can you unlock my account?", "category": "Account"}
+{"subject": "Unresolved Ticket and Data Request", "body": "I've contacted support three times about a login bug. Please resolve this or I may have to escalate. Also, I need a copy of all my data.", "category": "Complaint"}
+{"subject": "Mobile App is Missing Key Feature", "body": "Why can't I export my usage data from the mobile app? Desktop has this feature. It's frustrating not to have consistency.", "category": "Feedback"}

@@ -33,3 +33,4 @@ class Log(Base):
     event_type = Column(String(50))
     message = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+

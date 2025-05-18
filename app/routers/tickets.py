@@ -5,6 +5,8 @@ from app.db.database import AsyncSessionLocal
 from app.db.models import Ticket, Response  
 from app import schemas
 from sqlalchemy import select, insert
+from app.services.classifier import classify_ticket
+from app.db.models import Ticket, Response
 
 router = APIRouter()
 
@@ -25,13 +27,36 @@ async def draft_and_store_response(ticket_id: int, session_maker):
         await session.execute(stmt)
         await session.commit()
 
+
+async def classify_and_update_ticket(ticket_id: int, session_maker):
+    async with session_maker() as session:
+        ticket = await session.get(Ticket, ticket_id)
+        if ticket is not None:
+            category = await classify_ticket(ticket.subject, ticket.body)
+            ticket.category = category
+            await session.commit()
+
+
+from fastapi import BackgroundTasks
+
 @router.post("/", status_code=201, response_model=schemas.TicketOut)
-async def create_ticket(ticket: schemas.TicketIn, session: AsyncSession = Depends(get_session)):
+async def create_ticket(
+    ticket: schemas.TicketIn,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session)
+):
     db_ticket = Ticket(**ticket.model_dump())
     session.add(db_ticket)
     await session.commit()
     await session.refresh(db_ticket)
+
+    # Start classifier in background
+    background_tasks.add_task(
+        classify_and_update_ticket, db_ticket.id, AsyncSessionLocal
+    )
+
     return db_ticket
+
 
 @router.get("/", response_model=list[schemas.TicketOut])
 async def list_tickets(limit: int = 50, offset: int = 0, session: AsyncSession = Depends(get_session)):
@@ -71,3 +96,4 @@ async def get_ticket_responses(ticket_id: int, session: AsyncSession = Depends(g
     )
     responses = result.scalars().all()
     return responses
+
