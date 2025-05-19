@@ -2,6 +2,8 @@
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateTime, func
 from sqlalchemy.orm import declarative_base, relationship
+import enum
+import datetime
 
 Base = declarative_base()
 
@@ -34,4 +36,11 @@ class Log(Base):
     event_type = Column(String(50))
     message = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
+    level = Column(String(20))
+    
+class LogLevel(str, enum.Enum):
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
