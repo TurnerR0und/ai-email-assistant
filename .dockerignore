@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.git
+.idea
+.vscode
+.env
+venv/
+*.log
+logs/
+pgdata/ # If you ever have this locally
+*.db
+# Add other files/directories you don't want in your image

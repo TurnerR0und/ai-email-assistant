@@ -19,6 +19,14 @@ services:
     depends_on:
       - db
       - otel-collector
+    volumes:
+      - .:/app
+      - huggingface_cache:/root/.cache/huggingface # Mounts the named volume
+      # The path /root/.cache/huggingface is the typical default cache location
+      # for Hugging Face libraries when running as the root user inside a container.
+      # If you run as a non-root user or configure a different cache path via
+      # environment variables (like HF_HOME), you'd adjust the container path accordingly.
+  
     environment:
       DATABASE_URL: postgresql+asyncpg://appuser:secret@db:5432/aiassistant
 
@@ -46,3 +54,4 @@ services:
       - "3000:3000"
 volumes:
   pgdata:
+  huggingface_cache: {}
