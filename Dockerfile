@@ -13,11 +13,18 @@ ENV PYTHONUNBUFFERED=1
 # 2. Set the working directory in the container
 WORKDIR /code
 
+
+# Create the directory structure that HF_HOME will point into.
+# The hf_cache_data volume will be mounted to /cache_vol.
+# HF_HOME is set to /cache_vol/huggingface, so we create this specific path.
+# The process running in the container (root by default) needs to be able to write here.
+RUN mkdir -p /cache_vol/huggingface && chmod -R 777 /cache_vol
+# Note: chmod -R 777 on /cache_vol makes the mount point base dir and its hf subdir writable.
 # 3. Copy requirements.txt and install dependencies
 # This layer is cached and only rebuilds if requirements.txt changes.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN mkdir -p /app_cache/hf_cache && chmod 777 /app_cache/hf_cache
+
 
 # 4. Copy only the necessary application code into the container
 # Be specific here. If your application code is primarily in the 'app' directory,

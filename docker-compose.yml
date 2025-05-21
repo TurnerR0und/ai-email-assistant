@@ -1,4 +1,4 @@
-# docker-compose.yml (relevant parts for fastapi service and top-level volumes)
+# docker-compose.yml
 services:
   db:
     image: postgres:16
@@ -22,24 +22,27 @@ services:
       - otel-collector
     environment:
       DATABASE_URL: postgresql+asyncpg://appuser:secret@db:5432/aiassistant
+      # Explicitly set HF_HOME for the container.
+      # The transformers library will create subdirs like 'hub', 'datasets' under this.
+      HF_HOME: /cache_vol/huggingface 
       # OPENAI_API_KEY will be loaded from .env file
-      # REMOVED: HF_HOME, TRANSFORMERS_CACHE, HF_DATASETS_CACHE
     env_file:
       - .env
     volumes:
-      - ./app:/code/app  # Your code mount
-      # REMOVED: - model_cache_vol:/app_cache/... (or similar hf cache volume mount)
-      - ./alembic:/code/alembic                   # NEW: Mount for Alembic scripts and config
-      # If alembic.ini is at the project root and not inside ./alembic:
-      - ./alembic.ini:/code/alembic.ini         # NEW: Mount for alembic.ini
+      - ./app:/code/app                             # Your application code
+      - ./alembic:/code/alembic                   # Alembic scripts
+      - ./alembic.ini:/code/alembic.ini           # Alembic config
+      - hf_cache_data:/cache_vol                  # Mount the named volume to /cache_vol
+
+  # ... other services (otel-collector, prometheus, grafana) remain the same ...
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.99.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4318:4318" # OTLP HTTP receiver
-      - "8888:8888" # For Prometheus scraping otel-collector metrics
+      - "4318:4318" 
+      - "8888:8888" 
 
   prometheus:
     image: prom/prometheus:latest
@@ -54,12 +57,7 @@ services:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
-    # Optional: Add a volume for Grafana data persistence if needed
-    # volumes:
-    #   - grafana_data:/var/lib/grafana
 
 volumes:
-  pgdata: # For PostgreSQL data
-  # REMOVED: model_cache_vol: {} (or similar hf cache volume definition)
-  # Optional: Add if you uncommented grafana_data volume
-  # grafana_data: {}
+  pgdata:
+  hf_cache_data: {} # Define the named volume for Hugging Face cache
