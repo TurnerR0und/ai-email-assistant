@@ -14,7 +14,7 @@ CANDIDATE_LABELS = [
 @lru_cache(maxsize=1)
 def get_zero_shot_classifier():
     # Load the pipeline once per process (memory cache)
-    return pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+    return pipeline("zero-shot-classification", model="facebook/bart-large-mnli", from_flax=True)
 
 async def classify_ticket(subject: str, body: str) -> str:
     prompt = (

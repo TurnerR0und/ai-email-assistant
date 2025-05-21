@@ -21,14 +21,20 @@ services:
       - otel-collector
     volumes:
       - .:/app
-      - huggingface_cache:/root/.cache/huggingface # Mounts the named volume
+      - model_cache_vol:/app_cache # Mounts the named volume
       # The path /root/.cache/huggingface is the typical default cache location
       # for Hugging Face libraries when running as the root user inside a container.
       # If you run as a non-root user or configure a different cache path via
       # environment variables (like HF_HOME), you'd adjust the container path accordingly.
-  
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://appuser:secret@db:5432/aiassistant
+      # Explicitly define Hugging Face cache directories
+      HF_HOME: /app_cache/hf_cache  # Using a path relative to WORKDIR or an absolute one
+      TRANSFORMERS_CACHE: /app_cache/hf_cache/transformers
+      HF_DATASETS_CACHE: /app_cache/hf_cache/datasets
+      # Ensure your OPENAI_API_KEY is also available, e.g., via env_file
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.99.0
@@ -54,4 +60,4 @@ services:
       - "3000:3000"
 volumes:
   pgdata:
-  huggingface_cache: {}
+  model_cache_vol:
