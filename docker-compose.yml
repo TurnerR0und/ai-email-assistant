@@ -1,3 +1,4 @@
+# docker-compose.yml (relevant parts for fastapi service and top-level volumes)
 services:
   db:
     image: postgres:16
@@ -19,31 +20,26 @@ services:
     depends_on:
       - db
       - otel-collector
-    volumes:
-      - .:/app
-      - model_cache_vol:/app_cache # Mounts the named volume
-      # The path /root/.cache/huggingface is the typical default cache location
-      # for Hugging Face libraries when running as the root user inside a container.
-      # If you run as a non-root user or configure a different cache path via
-      # environment variables (like HF_HOME), you'd adjust the container path accordingly.
-    env_file:
-      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://appuser:secret@db:5432/aiassistant
-      # Explicitly define Hugging Face cache directories
-      HF_HOME: /app_cache/hf_cache  # Using a path relative to WORKDIR or an absolute one
-      TRANSFORMERS_CACHE: /app_cache/hf_cache/transformers
-      HF_DATASETS_CACHE: /app_cache/hf_cache/datasets
-      # Ensure your OPENAI_API_KEY is also available, e.g., via env_file
-
+      # OPENAI_API_KEY will be loaded from .env file
+      # REMOVED: HF_HOME, TRANSFORMERS_CACHE, HF_DATASETS_CACHE
+    env_file:
+      - .env
+    volumes:
+      - ./app:/code/app  # Your code mount
+      # REMOVED: - model_cache_vol:/app_cache/... (or similar hf cache volume mount)
+      - ./alembic:/code/alembic                   # NEW: Mount for Alembic scripts and config
+      # If alembic.ini is at the project root and not inside ./alembic:
+      - ./alembic.ini:/code/alembic.ini         # NEW: Mount for alembic.ini
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.99.0
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4318:4318"
-      - "8888:8888"
+      - "4318:4318" # OTLP HTTP receiver
+      - "8888:8888" # For Prometheus scraping otel-collector metrics
 
   prometheus:
     image: prom/prometheus:latest
@@ -58,6 +54,12 @@ services:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
+    # Optional: Add a volume for Grafana data persistence if needed
+    # volumes:
+    #   - grafana_data:/var/lib/grafana
+
 volumes:
-  pgdata:
-  model_cache_vol:
+  pgdata: # For PostgreSQL data
+  # REMOVED: model_cache_vol: {} (or similar hf cache volume definition)
+  # Optional: Add if you uncommented grafana_data volume
+  # grafana_data: {}
