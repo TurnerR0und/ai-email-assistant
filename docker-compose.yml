@@ -28,6 +28,10 @@ services:
       # OPENAI_API_KEY will be loaded from .env file
     env_file:
       - .env
+    device_requests:
+      - driver: nvidia
+        count: 1
+        capabilities: [gpu]
     volumes:
       - ./app:/code/app                             # Your application code
       - ./alembic:/code/alembic                   # Alembic scripts

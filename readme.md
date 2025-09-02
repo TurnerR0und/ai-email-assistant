@@ -71,7 +71,7 @@ pip install -r requirements.txt
 
 Configure environment variables
 
-Copy .env.example to .env and fill in secrets/keys as needed.
+Copy `.env.example` to `.env` and fill in secrets/keys as needed. Do not commit `.env` (it is gitignored). If a key was previously committed, rotate it.
 
 Set up the database
 
@@ -86,6 +86,11 @@ Run the App
 uvicorn app.main:app --reload --reload-dir ./app
 
 API docs will be available at http://localhost:8000/docs.
+
+Health checks
+
+- Liveness/DB: `GET /health` → `{ status: ok, db: up|down }`
+- ML/GPU: `GET /health/ml` → `{ gpu_available: bool, gpu_count: int }`
 
 Test the Classifier
 
@@ -111,6 +116,11 @@ Subject: ...
 Body: ...
 You are an expert support agent categorizing issues. Please classify this customer support message as one of: Billing, Technical, Account, Complaint, Feedback, Refund, Other. Only choose one label from this list.
 
+GPU usage
+
+- The classifier automatically uses GPU if `torch.cuda.is_available()` (device 0), else CPU.
+- When running via Docker, ensure the container has GPU access (e.g., `docker run --gpus all ...` or configure Compose to request a GPU). Torch/Transformers will detect CUDA inside the container.
+
 🧑‍💻 Roadmap
 
  ✅End-to-end async CRUD API with ticket storage
@@ -122,6 +132,9 @@ You are an expert support agent categorizing issues. Please classify this custom
  AI-powered response generation (OpenAI/Hugging Face, coming soon)
 
  Model monitoring, logging, and error handling improvements
+ - Prometheus metrics for FastAPI and LLM latency
+ - OpenTelemetry tracing via OTLP collector
+ - Async DB-backed logging of app warnings/errors
 
  SetFit/few-shot/fine-tuned pipeline (future)
 
@@ -144,4 +157,3 @@ Currently a solo project, but open to ideas, pull requests, or learning collabs!
 License
 
 MIT (see LICENSE)
-
