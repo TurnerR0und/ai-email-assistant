@@ -1,16 +1,19 @@
-from pydantic import BaseModel
-from datetime import datetime 
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
 
 class TicketIn(BaseModel):
     subject: str
     body: str
     # Add more fields if your Ticket model has them
 
+
 class TicketOut(TicketIn):
     id: int
-    category: str | None  
-    class Config:
-        from_attributes = True
+    category: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ResponseOut(BaseModel):
     id: int
@@ -21,5 +24,4 @@ class ResponseOut(BaseModel):
     status: str | None
     created_at: datetime  # from typing import datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

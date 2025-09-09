@@ -1,7 +1,7 @@
 import os
 import asyncio
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 
 @pytest.mark.asyncio
@@ -11,7 +11,7 @@ async def test_tickets_flow_returns_refund_and_response():
 
     from app.main import app
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # Create ticket
         r = await ac.post(
             "/tickets/",
