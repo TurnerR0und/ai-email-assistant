@@ -1,8 +1,7 @@
 # app/db/database.py
 
 import os
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from dotenv import load_dotenv
 
 # Load .env for local development if DATABASE_URL is not set,
@@ -32,7 +31,8 @@ else:
         f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
-engine = create_async_engine(DATABASE_URL, echo=True) # Set echo=False in production
-AsyncSessionLocal = sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
+engine = create_async_engine(DATABASE_URL, echo=True)  # Set echo=False in production
+# Factory that creates AsyncSession and supports async context manager
+AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
+    bind=engine, expire_on_commit=False
 )

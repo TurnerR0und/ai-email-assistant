@@ -78,7 +78,8 @@ async def classify_and_update_ticket(ticket_id: int, session_maker):
             if ticket is not None:
                 logger.warning(f"Classifying ticket {ticket_id} - Subject: {ticket.subject[:30]}...")
                 category = await classify_ticket(ticket.subject, ticket.body)
-                ticket.category = category
+                # setattr avoids Pylance Column typing confusion
+                setattr(ticket, "category", category)
                 await session.commit()
                 logger.warning(f"Ticket {ticket_id} category updated to: {category}")
             else:
@@ -129,7 +130,7 @@ async def create_ticket(
     label = "Unknown"
     try:
         label = await classify_ticket(ticket_in.subject, ticket_in.body)
-        db_ticket.category = label
+        setattr(db_ticket, "category", label)
         await session.commit()
     finally:
         latency_ms = int((time.perf_counter() - start) * 1000)

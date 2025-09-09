@@ -1,4 +1,5 @@
-# app/routers/inbound_email.py
+# In app/routers/inbound_email.py
+
 import hashlib
 import hmac
 import os
@@ -13,6 +14,10 @@ from app.db.database import AsyncSessionLocal
 from app.db.models import Ticket
 from app.routers.tickets import draft_and_store_response
 from app.schemas import TicketOut
+
+# --- ADDED IMPORTS ---
+from app.services.classifier import classify_ticket
+
 
 router = APIRouter()
 
@@ -79,6 +84,19 @@ async def receive_inbound_email(
     session.add(db_ticket)
     await session.commit()
     await session.refresh(db_ticket)
+
+    # --- ADDED CLASSIFICATION LOGIC ---
+    # Classify the ticket synchronously and save the category
+    try:
+        category = await classify_ticket(db_ticket.subject, db_ticket.body)
+        db_ticket.category = category
+        await session.commit()
+        await session.refresh(db_ticket)
+    except Exception as e:
+        # If classification fails, log it but don't crash the request
+        print(f"Error during classification for ticket {db_ticket.id}: {e}")
+    # --- END OF ADDED LOGIC ---
+
 
     # Start response generation in the background
     background_tasks.add_task(

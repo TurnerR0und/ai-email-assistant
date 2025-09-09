@@ -86,7 +86,8 @@ if os.getenv("DISABLE_OTEL", "0") != "1":
     processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-collector:4318/v1/traces"))
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
-    FastAPIInstrumentor.instrument_app(app)
+    # Use instance method to satisfy type checkers
+    FastAPIInstrumentor().instrument_app(app)
 
 # Prometheus metrics
 instrumentator = Instrumentator()
