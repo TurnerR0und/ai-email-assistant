@@ -14,7 +14,8 @@ DATA_PATH = Path("./challengetickets.jsonl")
 tickets = []
 with open(DATA_PATH, "r", encoding="utf-8") as f:
     for i, line in enumerate(f):
-        if i >= 50: break
+        if i >= 50:
+            break
         obj = json.loads(line)
         # Change this if your ground truth field has a different name
         tickets.append({

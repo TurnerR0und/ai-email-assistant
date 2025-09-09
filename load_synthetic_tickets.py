@@ -1,5 +1,8 @@
 # load_synthetic_tickets.py  (minimal skeleton)
-import asyncio, json, argparse, pathlib
+import asyncio
+import json
+import argparse
+import pathlib
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Ticket
@@ -26,6 +29,7 @@ async def main(path: pathlib.Path, chunk: int = 200):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--file", required=True); p.add_argument("--chunk", type=int, default=200)
+    p.add_argument("--file", required=True)
+    p.add_argument("--chunk", type=int, default=200)
     args = p.parse_args()
     asyncio.run(main(pathlib.Path(args.file), args.chunk))

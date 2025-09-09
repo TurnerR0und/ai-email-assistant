@@ -3,7 +3,7 @@ from functools import lru_cache
 import logging
 import os
 import time
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
 
 from prometheus_client import Counter, Histogram, Gauge
 from opentelemetry import trace

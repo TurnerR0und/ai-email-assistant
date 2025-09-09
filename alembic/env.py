@@ -1,5 +1,5 @@
 from logging.config import fileConfig
-import os # <--- Add this
+import os
 import sys
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -18,8 +18,8 @@ if config.config_file_name is not None:
 # to sys.path. This allows Python to find the 'app' module.
 sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Now this import should work:
-from app.db.models import Base
+# Import project models for Alembic's autogenerate
+from app.db.models import Base  # noqa: E402
 target_metadata = Base.metadata
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -31,8 +31,6 @@ target_metadata = Base.metadata
 # Example:
 # import sys
 # sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
-from app.db.models import Base # Make sure this import works from the context alembic runs in.
-target_metadata = Base.metadata
 
 
 # other values from the config, defined by the needs of env.py,

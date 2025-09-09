@@ -6,7 +6,6 @@ that consumes records from an asyncio.Queue to avoid blocking the event loop.
 
 import logging
 import asyncio
-from logging.handlers import RotatingFileHandler
 from typing import Optional
 
 from app.db.database import AsyncSessionLocal
@@ -90,6 +89,7 @@ def setup_logging(queue: Optional[asyncio.Queue] = None) -> None:
         root.addHandler(stderr_handler)
 
     # optional rotating file example (kept commented)
+    # from logging.handlers import RotatingFileHandler
     # file_handler = RotatingFileHandler("logs/app.log", maxBytes=10_000_000, backupCount=5)
     # file_handler.setFormatter(formatter)
     # root.addHandler(file_handler)

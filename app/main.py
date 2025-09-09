@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import asyncio
-from app.routers import tickets
-from app.routers import health
+from app.routers import tickets, inbound_email, health
 from app.logging_config import setup_logging, log_writer
 from app.services.classifier import (
     get_zero_shot_classifier,
@@ -63,6 +62,7 @@ app = FastAPI(lifespan=lifespan)
 # Routers come first
 app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
 app.include_router(health.router)
+app.include_router(inbound_email.router, prefix="/email", tags=["email"]) # <--- INCLUDE NEW ROUTER
 
 # Now instrument your app for telemetry & metrics
 # OpenTelemetry tracing
