@@ -14,3 +14,4 @@ if str(ROOT) not in sys.path:
 
 # Ensure default env flags for CI if not set
 os.environ.setdefault("APP_MOCK_AI", "1")
+os.environ.setdefault("DISABLE_OTEL", "1")

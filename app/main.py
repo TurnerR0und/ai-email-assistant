@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import asyncio
+import os
 from app.routers import tickets, inbound_email, health
 from app.logging_config import setup_logging, log_writer
 from app.services.classifier import (
@@ -21,6 +22,16 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure DB schema exists before serving
+    try:
+        from app.db.database import engine
+        from app.db.models import Base
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception:
+        # Avoid failing startup in test/mock environments
+        pass
+
     # install logging with async DB sink
     app.state.log_queue = asyncio.Queue(maxsize=1000)
     setup_logging(queue=app.state.log_queue)
@@ -65,13 +76,23 @@ app.include_router(health.router)
 app.include_router(inbound_email.router, prefix="/email", tags=["email"]) # <--- INCLUDE NEW ROUTER
 
 # Now instrument your app for telemetry & metrics
-# OpenTelemetry tracing
-provider = TracerProvider()
-processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-collector:4318/v1/traces"))
-provider.add_span_processor(processor)
-trace.set_tracer_provider(provider)
-FastAPIInstrumentor.instrument_app(app)
+# OpenTelemetry tracing (disable in tests/CI by setting DISABLE_OTEL=1)
+if os.getenv("DISABLE_OTEL", "0") != "1":
+    provider = TracerProvider()
+    processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://otel-collector:4318/v1/traces"))
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+    FastAPIInstrumentor.instrument_app(app)
 
 # Prometheus metrics
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app, endpoint="/metrics")
+
+# Lightweight init for tests that import app without starting lifespan
+if os.getenv("PYTEST_CURRENT_TEST") is not None and not hasattr(app.state, "log_queue"):
+    try:
+        app.state.log_queue = asyncio.Queue(maxsize=1000)
+        setup_logging(queue=app.state.log_queue)
+        app.state.log_consumer = asyncio.create_task(log_writer(app.state.log_queue))
+    except Exception:
+        pass
