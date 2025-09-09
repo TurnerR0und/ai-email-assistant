@@ -5,6 +5,7 @@ fastapi==0.115.12
 httpx==0.28.1
 Jinja2==3.1.6
 opentelemetry-api==1.33.1
+opentelemetry-exporter-otlp==1.33.1 # <-- ADD THIS LINE
 opentelemetry-instrumentation-fastapi==0.54b1
 opentelemetry-sdk==1.33.1
 prometheus_client==0.22.0
