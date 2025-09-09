@@ -33,9 +33,12 @@ async def lifespan(app: FastAPI):
         pass
 
     # install logging with async DB sink
-    app.state.log_queue = asyncio.Queue(maxsize=1000)
-    setup_logging(queue=app.state.log_queue)
-    app.state.log_consumer = asyncio.create_task(log_writer(app.state.log_queue))
+    created_logging = False
+    if not hasattr(app.state, "log_queue"):
+        app.state.log_queue = asyncio.Queue(maxsize=1000)
+        setup_logging(queue=app.state.log_queue)
+        app.state.log_consumer = asyncio.create_task(log_writer(app.state.log_queue))
+        created_logging = True
     # Warm ML model (eager load and run a tiny inference to fill caches)
     app.state.model_loaded = False
     app.state.model_backend = "unknown"
@@ -61,12 +64,13 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        # graceful shutdown of log consumer
-        try:
-            await app.state.log_queue.put(None)
-            await asyncio.wait_for(app.state.log_consumer, timeout=5)
-        except Exception:
-            pass
+        # graceful shutdown of log consumer only if we created it here
+        if created_logging:
+            try:
+                await app.state.log_queue.put(None)
+                await asyncio.wait_for(app.state.log_consumer, timeout=5)
+            except Exception:
+                pass
 
 app = FastAPI(lifespan=lifespan)
 

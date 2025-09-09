@@ -98,7 +98,27 @@ async def create_ticket(
     logger.warning(f"Creating ticket with subject: {ticket_in.subject[:30]}...")
     db_ticket = Ticket(**ticket_in.model_dump())
     session.add(db_ticket)
-    await session.commit()
+    try:
+        await session.commit()
+    except Exception as e:
+        # On first run in certain CI flows, tables may not be initialized yet.
+        # Attempt to initialize schema and retry once.
+        from sqlalchemy.exc import OperationalError
+        if isinstance(e, OperationalError) and "no such table" in str(e).lower():
+            await session.rollback()
+            try:
+                from app.db.database import engine
+                from app.db.models import Base
+                async with engine.begin() as conn:
+                    await conn.run_sync(Base.metadata.create_all)
+                session.add(db_ticket)
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+        else:
+            await session.rollback()
+            raise
     await session.refresh(db_ticket)
     logger.warning(f"Ticket {db_ticket.id} created. Classifying and scheduling background tasks.")
 
