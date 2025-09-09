@@ -4,7 +4,6 @@ import logging
 import pytest
 from sqlalchemy import select
 
-from app.main import app
 from app.db.database import AsyncSessionLocal
 from app.db.models import Log
 from app.logging_config import log_writer
