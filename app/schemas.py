@@ -18,6 +18,7 @@ class ResponseOut(BaseModel):
     generated_response: str
     reviewed: bool
     sent: bool
+    status: str | None
     created_at: datetime  # from typing import datetime
 
     class Config:

@@ -4,6 +4,11 @@ import asyncio
 from app.routers import tickets
 from app.routers import health
 from app.logging_config import setup_logging, log_writer
+from app.services.classifier import (
+    get_zero_shot_classifier,
+    get_model_info,
+    CANDIDATE_LABELS,
+)
 
 # OpenTelemetry imports
 from opentelemetry import trace
@@ -21,6 +26,27 @@ async def lifespan(app: FastAPI):
     app.state.log_queue = asyncio.Queue(maxsize=1000)
     setup_logging(queue=app.state.log_queue)
     app.state.log_consumer = asyncio.create_task(log_writer(app.state.log_queue))
+    # Warm ML model (eager load and run a tiny inference to fill caches)
+    app.state.model_loaded = False
+    app.state.model_backend = "unknown"
+    app.state.model_name = "unknown"
+    app.state.model_device = "cpu"
+    try:
+        classifier = get_zero_shot_classifier()
+        # Record model info
+        info = get_model_info()
+        app.state.model_backend = info.get("backend", "unknown")
+        app.state.model_name = info.get("model", "unknown")
+        app.state.model_device = info.get("device", "cpu")
+        # Tiny warmup (will be cheap with mock)
+        _ = classifier(
+            "Subject: warmup\nBody: test\n",
+            candidate_labels=CANDIDATE_LABELS,
+            multi_label=False,
+        )
+        app.state.model_loaded = True
+    except Exception:
+        app.state.model_loaded = False
     # OpenTelemetry: Set up tracing *here* (if any context needs app)
     try:
         yield

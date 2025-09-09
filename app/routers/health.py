@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from sqlalchemy import text
 from app.db.database import AsyncSessionLocal
 
@@ -18,7 +18,7 @@ async def health_root():
 
 
 @router.get("/ml")
-async def health_ml():
+async def health_ml(request: Request):
     gpu = False
     gpu_count = 0
     try:
@@ -28,5 +28,16 @@ async def health_ml():
     except Exception:
         gpu = False
         gpu_count = 0
-    return {"gpu_available": gpu, "gpu_count": gpu_count}
-
+    # Model info from app.state if set during warming
+    backend = getattr(request.app.state, "model_backend", "unknown")
+    model = getattr(request.app.state, "model_name", "unknown")
+    device = getattr(request.app.state, "model_device", "cpu")
+    loaded = getattr(request.app.state, "model_loaded", False)
+    return {
+        "gpu_available": gpu,
+        "gpu_count": gpu_count,
+        "backend": backend,
+        "model": model,
+        "device": device,
+        "loaded": loaded,
+    }

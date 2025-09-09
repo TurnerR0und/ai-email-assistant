@@ -89,8 +89,8 @@ API docs will be available at http://localhost:8000/docs.
 
 Health checks
 
-- Liveness/DB: `GET /health` → `{ status: ok, db: up|down }`
-- ML/GPU: `GET /health/ml` → `{ gpu_available: bool, gpu_count: int }`
+- Liveness/DB: `GET /health` → `{ status: "ok", db: "up"|"down" }`
+- ML/GPU/Model: `GET /health/ml` → `{ gpu_available: bool, gpu_count: int, backend: string, model: string, device: string, loaded: bool }`
 
 Test the Classifier
 
@@ -116,10 +116,30 @@ Subject: ...
 Body: ...
 You are an expert support agent categorizing issues. Please classify this customer support message as one of: Billing, Technical, Account, Complaint, Feedback, Refund, Other. Only choose one label from this list.
 
-GPU usage
+CPU-only vs GPU
 
-- The classifier automatically uses GPU if `torch.cuda.is_available()` (device 0), else CPU.
-- When running via Docker, ensure the container has GPU access (e.g., `docker run --gpus all ...` or configure Compose to request a GPU). Torch/Transformers will detect CUDA inside the container.
+- CPU run (no GPU required):
+  - Ensure `CUDA_VISIBLE_DEVICES=""` in your shell or `.env`.
+  - Run: `docker compose up` (if Docker errors on GPU device requests, remove the `device_requests:` block in `docker-compose.yml`).
+- GPU run:
+  - Install NVIDIA Container Toolkit and drivers.
+  - Run: `docker compose up` (the Compose file requests one GPU for the FastAPI service).
+  - The classifier auto-selects GPU if available, else CPU.
+
+Metrics & Tracing
+
+- Prometheus metrics exposed at `/metrics` (already scraped by the provided Prometheus config):
+  - `classifier_requests_total{backend,label}`
+  - `classifier_latency_seconds{backend}` (histogram)
+  - `classifier_errors_total{reason}`
+  - `gpu_selected{device}` (gauge)
+  - `log_queue_depth` (gauge)
+- OpenTelemetry tracing via OTLP (collector in `docker-compose.yml`). Each classification records span attributes:
+  `classifier.backend`, `classifier.model`, `classifier.device`, `latency_ms`, `label`.
+
+CI Notes
+
+- CI runs with `APP_MOCK_AI=1` and `CUDA_VISIBLE_DEVICES=""` to avoid GPU/network requirements. Real runs use actual models/keys.
 
 🧑‍💻 Roadmap
 

@@ -11,6 +11,7 @@ from typing import Optional
 
 from app.db.database import AsyncSessionLocal
 from app.db.models import Log
+from prometheus_client import Gauge
 
 
 class AsyncDBQueueHandler(logging.Handler):
@@ -43,11 +44,21 @@ class AsyncDBQueueHandler(logging.Handler):
             self.handleError(record)
 
 
+LOG_QUEUE_DEPTH = Gauge(
+    "log_queue_depth",
+    "Depth of the async log queue"
+)
+
+
 async def log_writer(queue: asyncio.Queue):
     """Async consumer that persists log records to the DB."""
     while True:
         item = await queue.get()
         if item is None:  # shutdown sentinel
+            try:
+                LOG_QUEUE_DEPTH.set(0)
+            except Exception:
+                pass
             queue.task_done()
             break
         try:
@@ -58,6 +69,10 @@ async def log_writer(queue: asyncio.Queue):
             # Intentionally avoid logging here to prevent recursion loops
             pass
         finally:
+            try:
+                LOG_QUEUE_DEPTH.set(queue.qsize())
+            except Exception:
+                pass
             queue.task_done()
 
 

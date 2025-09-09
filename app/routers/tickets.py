@@ -6,10 +6,12 @@ from app.db.database import AsyncSessionLocal
 from app.db.models import Ticket, Response  
 from app import schemas
 from sqlalchemy import select # Ensure select is imported
-from app.services.classifier import classify_ticket
+from app.services.classifier import classify_ticket, get_model_info
 from app.services.response_gen import generate_response
 import logging # Added for logging
 import traceback # Added for full traceback
+import time
+from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -98,14 +100,27 @@ async def create_ticket(
     session.add(db_ticket)
     await session.commit()
     await session.refresh(db_ticket)
-    logger.warning(f"Ticket {db_ticket.id} created. Scheduling background tasks.")
+    logger.warning(f"Ticket {db_ticket.id} created. Classifying and scheduling background tasks.")
 
-    # Start classifier in background
-    background_tasks.add_task(
-        classify_and_update_ticket, db_ticket.id, AsyncSessionLocal
-    )
+    # Classify synchronously to capture span attributes and set category immediately
+    tracer = trace.get_tracer(__name__)
+    info = get_model_info()
+    start = time.perf_counter()
+    label = "Unknown"
+    try:
+        label = await classify_ticket(ticket_in.subject, ticket_in.body)
+        db_ticket.category = label
+        await session.commit()
+    finally:
+        latency_ms = int((time.perf_counter() - start) * 1000)
+        with tracer.start_as_current_span("tickets.create") as span:
+            span.set_attribute("classifier.backend", info.get("backend", "unknown"))
+            span.set_attribute("classifier.model", info.get("model", "unknown"))
+            span.set_attribute("classifier.device", info.get("device", "cpu"))
+            span.set_attribute("latency_ms", latency_ms)
+            span.set_attribute("label", label)
     
-    # ALSO start response generation in background, in parallel
+    # Start response generation in background, in parallel
     background_tasks.add_task(
         draft_and_store_response, db_ticket.id, AsyncSessionLocal # <<<--- THIS LINE IS ADDED/ENSURED
     )
