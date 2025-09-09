@@ -36,11 +36,20 @@ async def generate_response(subject: str, body: str, category: str) -> str:
     client = OpenAI()  # Uses env OPENAI_API_KEY
     prompt = PROMPT_TEMPLATE.render(subject=subject, body=body, category=category)
     with LLM_LATENCY.time():
-        response = client.chat.completions.create(
-            model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
-            messages=[
-                {"role": "system", "content": "You are an expert support agent."},
-                {"role": "user", "content": prompt},
-            ],
+        response = client.responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-5-nano"),
+            system="You are an expert support agent.",
+            input=prompt,
         )
-    return response.choices[0].message.content.strip()
+    # Prefer SDK helper when available
+    content = getattr(response, "output_text", None)
+    if content:
+        return content.strip()
+    # Fallback: try to navigate structured output
+    try:
+        first = response.output[0]
+        part = first.content[0]
+        text = getattr(part, "text", "") or part.get("text", "")
+        return (text or "").strip()
+    except Exception:
+        return "Error: Unable to parse response from model"

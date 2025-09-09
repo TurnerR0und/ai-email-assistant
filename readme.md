@@ -10,7 +10,7 @@ Receives and stores support tickets in a PostgreSQL database
 
 Automatically classifies tickets by type (Billing, Technical, Account, Complaint, Feedback, Refund, Other) using zero-shot LLMs
 
-(Next Milestone) Will generate automated response drafts using OpenAI or Hugging Face models
+(Next Milestone) Will generate automated response drafts using OpenAI (Responses API) or Hugging Face models
 
 Provides a test/evaluation pipeline for measuring classification accuracy on synthetic and real-world tickets
 
@@ -103,6 +103,11 @@ Evaluate Performance
 python evaluate_classifier.py
 
 Prints classification metrics for both synthetic and challenge datasets.
+
+OpenAI Model
+
+- The response generator uses OpenAI's Responses API and targets `gpt-5-nano` by default.
+- Override the model with `OPENAI_MODEL` in your environment or `.env`.
 
 🔬 Model & ML Details
 
