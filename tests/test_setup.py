@@ -26,7 +26,7 @@ def event_loop():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_db_schema(configure_env):
+def create_db_schema(configure_env, event_loop): # <-- Add event_loop here
     # Create tables once for SQLite
     from app.db.database import engine
     from app.db.models import Base
@@ -35,5 +35,5 @@ def create_db_schema(configure_env):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.get_event_loop().run_until_complete(_create())
-
+    # Use the event_loop fixture to run the async function
+    event_loop.run_until_complete(_create())

@@ -6,13 +6,12 @@ from sqlalchemy import select
 
 from app.db.database import AsyncSessionLocal
 from app.db.models import Log
-from app.logging_config import log_writer
+from app.logging_config import log_writer, AsyncDBQueueHandler
 
 
 @pytest.mark.asyncio
 async def test_logging_queue_inserts_rows():
-    os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
-    os.environ.setdefault("APP_MOCK_AI", "1")
+    # The os.environ calls are no longer needed here
 
     # Start the log writer task
     log_queue = asyncio.Queue()
@@ -20,15 +19,14 @@ async def test_logging_queue_inserts_rows():
 
     logger = logging.getLogger("tests.logging")
     # Clear existing handlers and add a new one with the test queue
-    logger.handlers.clear()
-    from app.logging_config import AsyncDBQueueHandler
-
+    if logger.hasHandlers():
+        logger.handlers.clear()
     logger.addHandler(AsyncDBQueueHandler(log_queue))
     logger.setLevel(logging.WARNING)
 
     logger.warning("Test warning log for DB handler")
 
-    # Wait for the queue to drain
+    # Wait for the queue to process the item
     await log_queue.join()
 
     # Shutdown the log writer and wait for it to finish
